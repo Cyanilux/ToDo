@@ -10,6 +10,15 @@ namespace Cyan.ToDo {
         
         public void OnDrawGizmos() { }
 
+        public void RemoveCompleted() {
+            for (int i = list.Count - 1; i >= 0; i--) {
+                ToDoElement element = list[i];
+                if (element.completed) {
+                    list.RemoveAt(i);
+                }
+            }
+        }
+
     }
     
     [System.Serializable]

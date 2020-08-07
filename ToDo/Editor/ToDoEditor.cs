@@ -1,8 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
+using System.IO;
+using System.Text;
 
 namespace Cyan.ToDo {
 
@@ -18,6 +18,8 @@ namespace Cyan.ToDo {
 
         private GUIStyle style_greyLabel;
         private GUIStyle style_textArea;
+
+        private bool actions;
 
         private void Awake() {
             todoList = target as ToDo;
@@ -41,22 +43,35 @@ namespace Cyan.ToDo {
             reorderableList.DoLayoutList();
 
             // Buttons
-            if (GUILayout.Button("Remove Completed Tasks")) {
-                if (EditorUtility.DisplayDialog("Remove Completed Tasks",
-                    $"Are you sure you want to remove all completed tasks for the To Do List \"{todoList.listName}\"?", "Yes!", "Nooo!")) {
-
-                    Undo.RecordObject(todoList, "Remove Completed Tasks");
-
-                    // Remove Completed Tasks
-                    for (int i = todoList.list.Count - 1; i >= 0; i--) {
-                        ToDoElement element = todoList.list[i];
-                        if (element.completed) {
-                            todoList.list.RemoveAt(i);
-                        }
+            actions = EditorGUILayout.BeginFoldoutHeaderGroup(actions, "Actions");
+            if (actions) {
+                if (GUILayout.Button(new GUIContent("Remove Completed Tasks", "Remove all tasks marked as complete (green)"))) {
+                    if (EditorUtility.DisplayDialog("Remove Completed Tasks",
+                        $"Are you sure you want to remove all completed tasks for the To Do List \"{todoList.listName}\"?", "Yes!", "Nooo!")) {
+                        // Remove Completed Tasks
+                        Undo.RecordObject(todoList, "Remove Completed Tasks");
+                        todoList.RemoveCompleted();
                     }
+                }
 
+                if (GUILayout.Button(new GUIContent("Export Tasks", "Export tasks as Text File (this won't include object references)"))) {
+                    // Export Tasks
+                    string path = EditorUtility.SaveFilePanel("Export", "Assets", todoList.listName + "_" + PlayerSettings.productName + ".txt", "txt");
+                    if (path.Length != 0) {
+                        Export(path);
+                    }
+                }
+
+                if (GUILayout.Button(new GUIContent("Import Tasks", "Import tasks from Text File (won't affect existing tasks)"))) {
+                    // Import Tasks
+                    Undo.RecordObject(todoList, "Import Tasks");
+                    string path = EditorUtility.OpenFilePanel("Import", "Assets", "txt");
+                    if (path.Length != 0) {
+                        Import(path);
+                    }
                 }
             }
+            EditorGUILayout.EndFoldoutHeaderGroup();
         }
         
         private void OnAdd(ReorderableList list) {
@@ -218,6 +233,42 @@ namespace Cyan.ToDo {
                 }
             }
 
+        }
+
+        private void Export(string path) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < todoList.list.Count; i++) {
+                ToDoElement element = todoList.list[i];
+                string line = "";
+                if (element.completed) line += "[Complete]";
+                line += element.text.Replace("\n", @"\n");
+                stringBuilder.AppendLine(line);
+            }
+
+            File.WriteAllText(path, stringBuilder.ToString());
+        }
+
+        private void Import(string path) {
+            string[] lines = File.ReadAllLines(path);
+
+            for (int i = 0; i < lines.Length; i++) {
+                string line = lines[i];
+
+                bool complete = false;
+                string text = line;
+                if (line.StartsWith("[Complete]")) {
+                    text = line.Substring(10);
+                    complete = true;
+                }
+
+                text = text.Replace(@"\n", "\n");
+
+                ToDoElement element = new ToDoElement() {
+                    text = text,
+                    completed = complete
+                };
+                todoList.list.Add(element);
+            }
         }
     }
 }
