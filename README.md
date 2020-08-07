@@ -1,5 +1,6 @@
 # ToDo
 A simple in-editor To-Do list for Unity.<br />
+Tested in Unity 2020.1, 2019.3 and 2018.3. Unsure if it'll work in versions prior to that.<br />
 
 ![To Do](gif.gif)
 
