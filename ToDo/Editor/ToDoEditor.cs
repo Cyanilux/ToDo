@@ -43,7 +43,11 @@ namespace Cyan.ToDo {
             reorderableList.DoLayoutList();
 
             // Buttons
+#if UNITY_2019_1_OR_NEWER
             actions = EditorGUILayout.BeginFoldoutHeaderGroup(actions, "Actions");
+#else
+            actions = true;
+#endif
             if (actions) {
                 if (GUILayout.Button(new GUIContent("Remove Completed Tasks", "Remove all tasks marked as complete (green)"))) {
                     if (EditorUtility.DisplayDialog("Remove Completed Tasks",
@@ -71,7 +75,10 @@ namespace Cyan.ToDo {
                     }
                 }
             }
+
+#if UNITY_2019_1_OR_NEWER
             EditorGUILayout.EndFoldoutHeaderGroup();
+#endif
         }
         
         private void OnAdd(ReorderableList list) {
@@ -131,11 +138,18 @@ namespace Cyan.ToDo {
         private void DrawElementBackground(Rect rect, int index, bool active, bool focus) {
             if (index < 0) return;
             ToDoElement element = todoList.list[index];
-            
+
             Rect elementRect = new Rect(rect.x, rect.y + 1, rect.width, rect.height - 1);
+
+#if !UNITY_2020_1_OR_NEWER
+            // rect.height is wrong for older versions (tested: 2018.3, 2019.3), so needs recalculating
+            elementRect.height = ElementHeight(index);
+#else
+            // Handling the completed/green background for older versions causes issues while reordering
             if (element.completed) {
                 EditorGUI.DrawRect(elementRect, completedColor);
             }
+#endif
             if (focus) {
                 EditorGUI.DrawRect(elementRect, focusColor);
             }else if (active) {
@@ -145,7 +159,22 @@ namespace Cyan.ToDo {
 
         private void DrawElement(Rect rect, int index, bool active, bool focus) {
             ToDoElement element = todoList.list[index];
-            
+
+#if !UNITY_2020_1_OR_NEWER
+            // rect.height is wrong for older versions (tested: 2018.3, 2019.3), so needs recalculating
+            rect.height = ElementHeight(index);
+
+            // Versions older than 2020 can't handle this in DrawElementBackground
+            Rect elementRect = new Rect(rect.x, rect.y + 1, rect.width, rect.height - 1);
+            if (element.completed) {
+                EditorGUI.DrawRect(elementRect, completedColor);
+            }
+            if (focus) {
+                EditorGUI.DrawRect(elementRect, focusColor);
+            } else if (active) {
+                EditorGUI.DrawRect(elementRect, activeColor);
+            }
+#endif
             // Toggle
             float h = EditorGUIUtility.singleLineHeight;
             EditorGUI.BeginChangeCheck();
@@ -174,6 +203,7 @@ namespace Cyan.ToDo {
 
             float x = h + 5;
             float textHeight = rect.height;
+            
             if (element.objectReference) {
                 textHeight -= 25;
             }
