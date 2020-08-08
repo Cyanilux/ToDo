@@ -12,9 +12,13 @@ namespace Cyan.ToDo {
         private ToDo todoList;
         private ReorderableList reorderableList;
         
+        private static Color textColor;// = new Color(0.8f, 0.8f, 0.8f);
+
         private static Color focusColor = new Color(0, 170 / 255f, 187 / 255f, 0.5f);
         private static Color activeColor = new Color(0, 170 / 255f, 187 / 255f, 0.3f);
+        
         private static Color completedColor = new Color(0.2f, 0.9f, 0.2f);
+        private static Color completedTextColor = Color.black;
 
         private GUIStyle style_greyLabel;
         private GUIStyle style_textArea;
@@ -27,6 +31,15 @@ namespace Cyan.ToDo {
 
         public override void OnInspectorGUI() {
             //base.OnInspectorGUI();
+
+            if (style_textArea == null) {
+                style_textArea = new GUIStyle(GUI.skin.label);
+                style_textArea.alignment = TextAnchor.UpperLeft;
+                style_textArea.wordWrap = true;
+                style_textArea.richText = true;
+
+                textColor = style_textArea.normal.textColor;
+            }
             
             if (reorderableList == null) {
                 // Create Reorderable List
@@ -100,7 +113,7 @@ namespace Cyan.ToDo {
             EditorGUI.LabelField(rect, "@Cyanilux", style_greyLabel);
             
             EditorGUI.BeginChangeCheck();
-            string listName = EditorGUI.TextField(rect, todoList.listName, GUI.skin.label);
+            string listName = EditorGUI.TextField(rect, todoList.listName, style_textArea);
             if (EditorGUI.EndChangeCheck()) {
                 Undo.RecordObject(todoList, "List Name Change");
                 todoList.listName = listName;
@@ -192,27 +205,29 @@ namespace Cyan.ToDo {
             if (preventSelection) {
                 GUI.skin.settings.cursorColor = new Color(0, 0, 0, 0);
             }
-
-            // Text Area
-            if (style_textArea == null) {
-                style_textArea = new GUIStyle(GUI.skin.label);
-                style_textArea.alignment = TextAnchor.UpperLeft;
-                style_textArea.wordWrap = true;
-                style_textArea.richText = true;
-            }
-
-            float x = h + 5;
-            float textHeight = rect.height;
             
-            if (element.objectReference) {
-                textHeight -= 25;
+            // Text Colours
+            if (completed) {
+                style_textArea.normal.textColor = completedTextColor;
+                style_textArea.focused.textColor = completedTextColor;
+                style_textArea.hover.textColor = completedTextColor;
+            } else {
+                style_textArea.normal.textColor = textColor;
+                style_textArea.focused.textColor = textColor;
+                style_textArea.hover.textColor = textColor;
             }
-
+            
             // If editing, turn off richText
             if (element.editing) {
                 style_textArea.richText = false;
             }
 
+            // Text Area
+            float x = h + 5;
+            float textHeight = rect.height;
+            if (element.objectReference) {
+                textHeight -= 25;
+            }
             EditorGUI.BeginChangeCheck();
             GUI.SetNextControlName("TextArea");
             string text = EditorGUI.TextArea(
@@ -235,9 +250,13 @@ namespace Cyan.ToDo {
             // Object Field
             if (element.objectReference) {
                 EditorGUI.BeginChangeCheck();
-                Object obj = EditorGUI.ObjectField(
+                EditorGUI.LabelField(
                     new Rect(rect.x + x, rect.y + rect.height + 5 - 25, rect.width - 27, h),
                     "Linked Object : ",
+                    style_textArea);
+                x += EditorGUIUtility.labelWidth;
+                Object obj = EditorGUI.ObjectField(
+                    new Rect(rect.x + x, rect.y + rect.height + 5 - 25, rect.width - x, h),
                     element.objectReference,
                     typeof(Object), true);
                 if (EditorGUI.EndChangeCheck()) {
