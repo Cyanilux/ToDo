@@ -459,14 +459,16 @@ namespace Cyan.ToDo {
 
             Debug.Log("SceneObjectReference : " + element.objectReferenceID);
             PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            EditorUtility.SetDirty(target);
         }
 
         protected void LinkObjectReference(ToDoElement element, Object obj) {
             Undo.RecordObject(target, "Changed Task Object");
             element.objectReference = obj;
             element.objectReferenceID = null;
-            PrefabUtility.RecordPrefabInstancePropertyModifications(target);
             Debug.Log("ObjectReference");
+            PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            EditorUtility.SetDirty(target);
         }
 
         private void SetTaskObject(ToDoElement element, Object obj) {
@@ -476,19 +478,14 @@ namespace Cyan.ToDo {
                 if (IsReferenceAllowed(obj, null, out GameObject gameObject)) {
                     // Asset
                     LinkObjectReference(element, obj);
-
-                    // Need to mark ScriptableObject as dirty so it saves changes
-                    EditorUtility.SetDirty(target);
                 } else {
                     // Scene Reference, Store SceneAsset in objectReference
                     LinkCrossSceneReference(element, obj, gameObject);
-                    EditorSceneManager.SaveScene(gameObject.scene);
                 }
             } else if (!IsReferenceAllowed(obj, scenePath, out GameObject gameObject)) {
                 Debug.Log("MonoBehaviour, Cross-Scene");
                 // ToDo is MonoBehaviour in Scene, but obj is in different scene. Cross-scene reference
                 LinkCrossSceneReference(element, obj, gameObject);
-                EditorSceneManager.SaveScene(gameObject.scene);
             } else {
                 // ToDo is MonoBehaviour, obj is GameObject/Component in same scene or is an Asset
                 Debug.Log("MonoBehaviour, Same Scene");
