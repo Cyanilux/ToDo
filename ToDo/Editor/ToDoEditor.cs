@@ -112,6 +112,12 @@ namespace Cyan.ToDo {
             }
             EditorGUI.LabelField(rect, "@Cyanilux", style_greyLabel);
             
+            if (style_textArea != null){
+                style_textArea.normal.textColor = textColor;
+                style_textArea.focused.textColor = textColor;
+                style_textArea.hover.textColor = textColor;
+            }
+            
             EditorGUI.BeginChangeCheck();
             string listName = EditorGUI.TextField(rect, todoList.listName, style_textArea);
             if (EditorGUI.EndChangeCheck()) {
