@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Cyan.ToDo {
 
+    [AddComponentMenu("Cyan/To Do", 1)]
     public class ToDo : MonoBehaviour {
 
         public string listName = "To Do";
