@@ -18,7 +18,7 @@ Tested in Unity 2020.1, 2019.3 and 2018.3. Unsure if it'll work in versions prio
 <br />
 ## Known Bugs :
 • Regular object references may be lost if a To Do list component is moved between scenes. (Cross-scene object references are unaffected)<br />
-• Creating a Prefab from a GameObject containing the To Do list will update regular object references to the cross-scene method so they are not lost. However this can only occur if the To Do list is seleted / visible in the inspector currently.<br />
+• Creating a Prefab from a GameObject containing the To Do list will update regular object references to the cross-scene method so they are not lost. However this can only occur if the To Do list is selected / visible in the inspector currently.<br />
 <br />
 @Cyanilux<br />
 :)
