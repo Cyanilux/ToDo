@@ -12,7 +12,7 @@ namespace Cyan.ToDo {
         private ToDo todoList;
         private ReorderableList reorderableList;
         
-        private static Color textColor;// = new Color(0.8f, 0.8f, 0.8f);
+        private static Color textColor;
 
         private static Color focusColor = new Color(0, 170 / 255f, 187 / 255f, 0.5f);
         private static Color activeColor = new Color(0, 170 / 255f, 187 / 255f, 0.3f);
@@ -27,6 +27,13 @@ namespace Cyan.ToDo {
 
         private void Awake() {
             todoList = target as ToDo;
+        }
+
+        [MenuItem("GameObject/Create Other/Cyan/To Do List (MonoBehaviour)")]
+        static void Create() {
+            GameObject obj = new GameObject("To Do");
+            obj.AddComponent<ToDo>();
+            Selection.activeGameObject = obj;
         }
 
         public override void OnInspectorGUI() {
