@@ -9,7 +9,7 @@ namespace Cyan.ToDo {
     /// That GUID can then be used to obtain the object, allowing for cross-scene references
     /// (as well as references to scene objects for prefabs + ScriptableObject)
     /// </summary>
-    [AddComponentMenu("Cyan/SceneReferences", 2)]
+    [AddComponentMenu("Cyan/Scene References Handler", 2)]
     public class SceneReferencesHandler : MonoBehaviour {
         
         public static bool disallowSceneReferences = false;
@@ -21,8 +21,12 @@ namespace Cyan.ToDo {
          * If you want to remove/break existing references for a scene, use GameObject -> Cyan.ToDo -> Remove Scene References Handler
         */
 
+#if UNITY_2020_1_OR_NEWER
         [SerializeField] private SerializableDictionary<string, Object> objects = new SerializableDictionary<string, Object>();
-        
+#else
+        [SerializeField] private SerializableDictionary_StringObject objects = new SerializableDictionary_StringObject();
+#endif
+
         private void Reset() {
             if (gameObject.hideFlags != HideFlags.HideInHierarchy) {
                 Debug.LogWarning("Cyan.ToDo : Adding a SceneReferences component to a scene manually is not advised. (see console for more info)\n" +

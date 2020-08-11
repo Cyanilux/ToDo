@@ -70,9 +70,14 @@ namespace Cyan.ToDo {
                     }
                 }
             }
-            
+
             // Apply Prefab Changes
+            PrefabUtility.prefabInstanceUpdated -= PrefabUpdated;
             PrefabUtility.ApplyObjectOverride(todo, path, InteractionMode.AutomatedAction);
+            PrefabUtility.prefabInstanceUpdated += PrefabUpdated;
+            // Note, in 2018.3 seems to cause unity to crash/hold due to calling PrefabUpdated
+            // so need to unregister + reregister to prevent infinite loop.
+            // This didn't seem to happen in 2020.1, but should probably do it still just to be safe
         }
     }
 
@@ -126,8 +131,18 @@ namespace Cyan.ToDo {
             }
         }
 
+        [MenuItem("GameObject/Cyan.ToDo/Select Scene References Handler")]
+        static void SelectSceneReferences() {
+            Scene scene = SceneManager.GetActiveScene();
+            SceneReferencesHandler sceneReferencesHandler = SceneReferencesHandler.GetSceneReferencesHandler(scene);
+            if (sceneReferencesHandler != null) {
+                Selection.activeGameObject = sceneReferencesHandler.gameObject;
+            }
+        }
+
         [MenuItem("GameObject/Cyan.ToDo/Remove Scene References Handler", true)]
-        static bool ValidateDeleteSceneReferences() {
+        [MenuItem("GameObject/Cyan.ToDo/Select Scene References Handler", true)]
+        static bool ValidateSceneReferences() {
             Scene scene = SceneManager.GetActiveScene();
             return (SceneReferencesHandler.GetSceneReferencesHandler(scene) != null);
         }

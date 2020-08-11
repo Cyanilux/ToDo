@@ -3,6 +3,15 @@ using UnityEngine;
 
 namespace Cyan.ToDo {
 
+#if !UNITY_2020_1_OR_NEWER
+    // Unity can't serialise generic fields like "SerializableDictionary<string, Object> fieldName" (prior to 2020.1)
+    // But it can serialise a class that inherits a generic class, so we need this for previous versions :
+    [System.Serializable]
+    public class SerializableDictionary_StringObject : SerializableDictionary<string, Object> {
+
+    }
+#endif
+
     /// <summary>
     /// A version of Dictionary which is serialisable by converting it to and from Lists
     /// </summary>
