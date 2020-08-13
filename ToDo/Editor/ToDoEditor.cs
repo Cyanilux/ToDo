@@ -63,7 +63,6 @@ namespace Cyan.ToDo {
                                 // It's okay, it's the prefab itself, so we can ignore it!
                             } else {
                                 // Is in-scene object reference, need to swap to cross-scene reference
-                                Debug.Log("Swapping to Cross-scene Reference!");
                                 LinkCrossSceneReference(element, element.objectReference, gameObject);
                             }
                         }
@@ -108,7 +107,7 @@ namespace Cyan.ToDo {
 
         private bool actions;
 
-        [MenuItem("GameObject/Create Other/Cyan.ToDo (MonoBehaviour)")]
+        [MenuItem("GameObject/Create Other/Cyan/To Do List (MonoBehaviour)")] // Cyan.ToDo (MonoBehaviour)
         static void Create() {
             GameObject obj = new GameObject("To Do");
             obj.AddComponent<ToDo>();
@@ -182,6 +181,7 @@ namespace Cyan.ToDo {
                         // Remove Completed Tasks
                         Undo.RecordObject(target, "Remove Completed Tasks");
                         todoList.RemoveCompleted();
+                        RecordPrefabInstancePropertyModifications(target);
                     }
                 }
 
@@ -200,6 +200,7 @@ namespace Cyan.ToDo {
                     if (path.Length != 0) {
                         Import(path);
                     }
+                    RecordPrefabInstancePropertyModifications(target);
                 }
             }
 
@@ -211,11 +212,13 @@ namespace Cyan.ToDo {
         private void OnAdd(ReorderableList list) {
             Undo.RecordObject(target, "Task Added");
             todoList.tasks.Add(new ToDoElement());
+            RecordPrefabInstancePropertyModifications(target);
         }
 
         private void OnRemove(ReorderableList list) {
             Undo.RecordObject(target, "Task Removed");
             todoList.tasks.RemoveAt(list.index);
+            RecordPrefabInstancePropertyModifications(target);
         }
 
         private void DrawHeader(Rect rect) {
@@ -234,6 +237,7 @@ namespace Cyan.ToDo {
             if (EditorGUI.EndChangeCheck()) {
                 Undo.RecordObject(target, "List Name Change");
                 todoList.listName = listName;
+                RecordPrefabInstancePropertyModifications(target);
             }
         }
 
@@ -259,6 +263,10 @@ namespace Cyan.ToDo {
         }
 
         private void ResetTextColor() {
+            SetTextColor(textColor);
+        }
+
+        private void SetTextColor(Color textColor) {
             style_textArea.normal.textColor = textColor;
             style_textArea.focused.textColor = textColor;
             style_textArea.hover.textColor = textColor;
@@ -266,6 +274,8 @@ namespace Cyan.ToDo {
             style_label.normal.textColor = textColor;
             style_label.focused.textColor = textColor;
             style_label.hover.textColor = textColor;
+
+            GUI.skin.settings.cursorColor = textColor;
         }
 
         private float ElementHeight(int index) {
@@ -337,24 +347,23 @@ namespace Cyan.ToDo {
             if (EditorGUI.EndChangeCheck()) {
                 Undo.RecordObject(target, "Toggled Task Completion");
                 element.completed = completed;
-            }
-
-            // This prevents text area from highlighting all text on focus
-            bool preventSelection = (UnityEngine.Event.current.type == EventType.MouseDown);
-            Color cursorColor = GUI.skin.settings.cursorColor;
-            if (preventSelection) {
-                GUI.skin.settings.cursorColor = new Color(0, 0, 0, 0);
+                RecordPrefabInstancePropertyModifications(target);
             }
             
             // Text Colours
             if (completed) {
-                style_textArea.normal.textColor = completedTextColor;
-                style_textArea.focused.textColor = completedTextColor;
-                style_textArea.hover.textColor = completedTextColor;
+                SetTextColor(completedTextColor);
             } else {
                 ResetTextColor();
             }
-            
+
+            // This prevents text area from highlighting all text on focus
+            bool preventSelection = (UnityEngine.Event.current.type == EventType.MouseDown);
+            //Color cursorColor = GUI.skin.settings.cursorColor;
+            if (preventSelection) {
+                GUI.skin.settings.cursorColor = new Color(0, 0, 0, 0);
+            }
+
             // If editing, turn off richText
             if (element.editing) {
                 style_textArea.richText = false;
@@ -368,6 +377,7 @@ namespace Cyan.ToDo {
             }
             EditorGUI.BeginChangeCheck();
             GUI.SetNextControlName("TextArea");
+
             string text = EditorGUI.TextArea(
                 new Rect(rect.x + x, rect.y + 2, rect.width - x, textHeight),
                 element.text, style_textArea);
@@ -378,13 +388,9 @@ namespace Cyan.ToDo {
             if (EditorGUI.EndChangeCheck()) {
                 Undo.RecordObject(target, "Edited Task Text");
                 element.text = text;
+                RecordPrefabInstancePropertyModifications(target);
             }
-
-            // Reset Cursor Color
-            if (preventSelection) {
-                GUI.skin.settings.cursorColor = cursorColor;
-            }
-
+            
             // Object Reference
             if (element.objectReference) { // either in-scene reference, or is SceneAsset
                 Object objectReference = null;
@@ -461,6 +467,17 @@ namespace Cyan.ToDo {
             }
         }
 
+        private void RecordPrefabInstancePropertyModifications(Object target) {
+#if UNITY_2018_3_OR_NEWER
+            bool isPrefabInstance = PrefabUtility.IsPartOfPrefabInstance(target);
+#else
+            bool isPrefabInstance = (PrefabUtility.GetPrefabType(target) == PrefabType.PrefabInstance);
+#endif
+            if (isPrefabInstance) {
+                PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            }
+        }
+
         protected void LinkCrossSceneReference(ToDoElement element, Object obj, GameObject gameObject) {
             Scene scene = gameObject.scene;
             SceneAsset sceneAsset = GetSceneAsset(scene);
@@ -472,24 +489,26 @@ namespace Cyan.ToDo {
             element.objectReferenceID = sceneReferencesHandler.RegisterObject(obj);
             element.tempObjectReference = null;
 
-            Debug.Log("SceneObjectReference : " + element.objectReferenceID);
-            PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            //Debug.Log("SceneObjectReference : " + element.objectReferenceID);
+            RecordPrefabInstancePropertyModifications(target);
             EditorUtility.SetDirty(target);
         }
 
         protected void LinkObjectReference(ToDoElement element, Object obj) {
             Undo.RecordObject(target, "Changed Task Object");
+
             element.objectReference = obj;
             element.objectReferenceID = null;
-            Debug.Log("ObjectReference");
-            PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            element.tempObjectReference = null;
+
+            //Debug.Log("ObjectReference");
+            RecordPrefabInstancePropertyModifications(target);
             EditorUtility.SetDirty(target);
         }
 
         private void SetTaskObject(ToDoElement element, Object obj) {
             if (scenePath == null) {
                 // ToDo is Prefab / ScriptableObject Asset
-                Debug.Log("Prefab / ScriptableObject");
                 if (IsReferenceAllowed(obj, null, out GameObject gameObject)) {
                     // Asset
                     LinkObjectReference(element, obj);
@@ -498,12 +517,10 @@ namespace Cyan.ToDo {
                     LinkCrossSceneReference(element, obj, gameObject);
                 }
             } else if (!IsReferenceAllowed(obj, scenePath, out GameObject gameObject)) {
-                Debug.Log("MonoBehaviour, Cross-Scene");
                 // ToDo is MonoBehaviour in Scene, but obj is in different scene. Cross-scene reference
                 LinkCrossSceneReference(element, obj, gameObject);
             } else {
                 // ToDo is MonoBehaviour, obj is GameObject/Component in same scene or is an Asset
-                Debug.Log("MonoBehaviour, Same Scene");
                 LinkObjectReference(element, obj);
             }
         }
@@ -553,7 +570,6 @@ namespace Cyan.ToDo {
                 }
             }
             if (gameObject == null) return true; // Not a GameObject, would be an Asset, so always allowed.
-            Debug.Log("IsReferenceAllowed, Scene : " + gameObject.scene.path);
             return (gameObject.scene.path == scenePath); // Same scene = allow, Cross-scene = not allowed
         }
 
