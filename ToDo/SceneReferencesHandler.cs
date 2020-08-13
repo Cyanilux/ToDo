@@ -49,9 +49,16 @@ namespace Cyan.ToDo {
             SceneReferencesHandler sceneReferencesHandler = null;
             for (int i = 0; i < roots.Length; i++) {
                 GameObject root = roots[i];
+#if UNITY_2019_2_OR_NEWER
                 if (root.TryGetComponent(out sceneReferencesHandler)) {
                     return sceneReferencesHandler;
                 }
+#else
+                sceneReferencesHandler = root.GetComponent<SceneReferencesHandler>();
+                if (sceneReferencesHandler != null) {
+                    return sceneReferencesHandler;
+                }
+#endif
             }
 
             // Create Scene Reference Handler in scene
