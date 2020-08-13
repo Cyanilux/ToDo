@@ -7,7 +7,7 @@ namespace Cyan.ToDo {
     /// <summary>
     /// ScriptableObject version of the To Do list
     /// </summary>
-    [CreateAssetMenu(fileName = "To Do", menuName = "Cyan.ToDo (Scriptable Object)", order = 1)]
+    [CreateAssetMenu(fileName = "To Do", menuName = "To Do List (ScriptableObject)", order = 1)]
     public class ToDoSO : ScriptableObject {
 
         public ToDoList list = new ToDoList();

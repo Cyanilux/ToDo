@@ -107,7 +107,7 @@ namespace Cyan.ToDo {
 
         private bool actions;
 
-        [MenuItem("GameObject/Create Other/Cyan/To Do List (MonoBehaviour)")] // Cyan.ToDo (MonoBehaviour)
+        [MenuItem("GameObject/Create Other/To Do List (MonoBehaviour)")]
         static void Create() {
             GameObject obj = new GameObject("To Do");
             obj.AddComponent<ToDo>();
